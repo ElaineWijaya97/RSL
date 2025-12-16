@@ -125,9 +125,32 @@ function initApp() {
     }
   }
 
-  // Save to localStorage
+  // Save to localStorage with auto-save
+  let saveTimeout = null;
   function saveData() {
-    localStorage.setItem('inventarisData', JSON.stringify(categories));
+    try {
+      localStorage.setItem('inventarisData', JSON.stringify(categories));
+      console.log('Data saved successfully');
+    } catch (e) {
+      console.error('Error saving data:', e);
+      // If storage is full, try to clear old data or notify user
+      alert('Peringatan: Data tidak dapat disimpan. Mungkin storage penuh.');
+    }
+  }
+
+  // Auto-save function with debouncing
+  function autoSave() {
+    if (saveTimeout) {
+      clearTimeout(saveTimeout);
+    }
+    saveTimeout = setTimeout(function() {
+      saveData();
+    }, 100); // Save 100ms after last change
+  }
+
+  // Enhanced saveData that also triggers auto-save
+  function saveDataNow() {
+    saveData();
   }
 
   // Render full category structure
@@ -216,7 +239,7 @@ function initApp() {
     const name = prompt('Nama subkategori');
     if (!name) return;
     categories[catIdx].subcategories.push({ name: name, subsub: [] });
-    saveData();
+    saveDataNow();
     renderCategories();
   };
 
@@ -230,7 +253,7 @@ function initApp() {
       expiry: '', 
       photos: [] 
     });
-    saveData();
+    saveDataNow();
     renderCategories();
   };
 
@@ -238,7 +261,7 @@ function initApp() {
     if (!isAdmin) return alert('Admin only');
     if (confirm('Hapus kategori ' + categories[catIdx].name + '?')) {
       categories.splice(catIdx, 1);
-      saveData();
+      saveDataNow();
       renderCategories();
     }
   };
@@ -247,7 +270,7 @@ function initApp() {
     if (!isAdmin) return alert('Admin only');
     if (confirm('Hapus subkategori ' + categories[catIdx].subcategories[subIdx].name + '?')) {
       categories[catIdx].subcategories.splice(subIdx, 1);
-      saveData();
+      saveDataNow();
       renderCategories();
     }
   };
@@ -256,7 +279,7 @@ function initApp() {
     if (!isAdmin) return alert('Admin only');
     if (confirm('Hapus item ' + categories[catIdx].subcategories[subIdx].subsub[itemIdx].name + '?')) {
       categories[catIdx].subcategories[subIdx].subsub.splice(itemIdx, 1);
-      saveData();
+      saveDataNow();
       renderCategories();
     }
   };
@@ -267,13 +290,13 @@ function initApp() {
     const newName = prompt('Nama item baru:', item.name);
     if (newName && newName !== item.name) {
       item.name = newName;
-      saveData();
+      saveDataNow();
       renderCategories();
     }
     const newExpiry = prompt('Tanggal kadaluarsa (dd/mm/yyyy):', item.expiry || '');
     if (newExpiry !== null) {
       item.expiry = newExpiry;
-      saveData();
+      saveDataNow();
       renderCategories();
     }
   };
@@ -351,12 +374,12 @@ function initApp() {
         reader.onload = function(e) {
           if (!item.photos) item.photos = [];
           item.photos.push(e.target.result);
-          saveData();
+          saveDataNow();
           renderCategories();
         };
         reader.readAsDataURL(file);
       } else {
-        saveData();
+        saveDataNow();
         renderCategories();
       }
       
@@ -390,10 +413,22 @@ function initApp() {
       const name = prompt('Nama kategori');
       if (!name) return;
       categories.push({ name: name, subcategories: [] });
-      saveData();
+      saveDataNow();
       renderCategories();
     });
   }
+
+  // Auto-save on page unload
+  window.addEventListener('beforeunload', function() {
+    saveDataNow();
+  });
+
+  // Auto-save periodically (every 30 seconds) as backup
+  setInterval(function() {
+    if (categories && categories.length > 0) {
+      saveData();
+    }
+  }, 30000);
 
   // Search
   if (searchInput) {
