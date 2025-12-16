@@ -113,27 +113,89 @@ function initApp() {
     }
   ];
 
-  // Load from localStorage
+  // Check if Firebase is available
+  const useFirebase = typeof firebase !== 'undefined' && typeof db !== 'undefined' && db;
+  const DATA_COLLECTION = 'inventaris';
+  const DATA_DOC_ID = 'main';
+
+  // Load from Firebase or localStorage
   function loadData() {
+    if (useFirebase) {
+      // Load from Firebase Firestore
+      db.collection(DATA_COLLECTION).doc(DATA_DOC_ID).get()
+        .then(function(doc) {
+          if (doc.exists) {
+            categories = doc.data().categories || categories;
+            renderCategories();
+            console.log('Data loaded from Firebase');
+          } else {
+            // No data in Firebase, try localStorage as fallback
+            loadFromLocalStorage();
+          }
+        })
+        .catch(function(error) {
+          console.error('Error loading from Firebase:', error);
+          // Fallback to localStorage
+          loadFromLocalStorage();
+        });
+    } else {
+      // Fallback to localStorage
+      loadFromLocalStorage();
+    }
+  }
+
+  // Load from localStorage (fallback)
+  function loadFromLocalStorage() {
     const saved = localStorage.getItem('inventarisData');
     if (saved) {
       try {
         categories = JSON.parse(saved);
+        renderCategories();
+        console.log('Data loaded from localStorage');
       } catch (e) {
         console.error('Error loading data:', e);
       }
+    } else {
+      renderCategories();
     }
   }
 
-  // Save to localStorage with auto-save
+  // Save to Firebase or localStorage
   let saveTimeout = null;
   function saveData() {
+    if (useFirebase) {
+      // Save to Firebase Firestore
+      db.collection(DATA_COLLECTION).doc(DATA_DOC_ID).set({
+        categories: categories,
+        lastUpdated: firebase.firestore.FieldValue.serverTimestamp()
+      })
+      .then(function() {
+        console.log('Data saved to Firebase successfully');
+        // Also save to localStorage as backup
+        try {
+          localStorage.setItem('inventarisData', JSON.stringify(categories));
+        } catch (e) {
+          console.warn('Could not save to localStorage backup:', e);
+        }
+      })
+      .catch(function(error) {
+        console.error('Error saving to Firebase:', error);
+        // Fallback to localStorage
+        saveToLocalStorage();
+      });
+    } else {
+      // Fallback to localStorage
+      saveToLocalStorage();
+    }
+  }
+
+  // Save to localStorage (fallback)
+  function saveToLocalStorage() {
     try {
       localStorage.setItem('inventarisData', JSON.stringify(categories));
-      console.log('Data saved successfully');
+      console.log('Data saved to localStorage');
     } catch (e) {
       console.error('Error saving data:', e);
-      // If storage is full, try to clear old data or notify user
       alert('Peringatan: Data tidak dapat disimpan. Mungkin storage penuh.');
     }
   }
@@ -145,12 +207,29 @@ function initApp() {
     }
     saveTimeout = setTimeout(function() {
       saveData();
-    }, 100); // Save 100ms after last change
+    }, 500); // Save 500ms after last change
   }
 
   // Enhanced saveData that also triggers auto-save
   function saveDataNow() {
     saveData();
+  }
+
+  // Set up real-time listener for Firebase (if available)
+  if (useFirebase) {
+    db.collection(DATA_COLLECTION).doc(DATA_DOC_ID).onSnapshot(function(doc) {
+      if (doc.exists && doc.data().categories) {
+        const newCategories = doc.data().categories;
+        // Only update if data is different (avoid infinite loops)
+        if (JSON.stringify(categories) !== JSON.stringify(newCategories)) {
+          categories = newCategories;
+          renderCategories();
+          console.log('Data synced from Firebase in real-time');
+        }
+      }
+    }, function(error) {
+      console.error('Error listening to Firebase:', error);
+    });
   }
 
   // Render full category structure
