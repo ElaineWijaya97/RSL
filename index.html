@@ -36,6 +36,9 @@
       <label for="logQty">Jumlah</label>
       <input id="logQty" type="number" min="1" value="1" />
 
+      <label for="logExpiry">Tanggal Kadaluarsa (opsional)</label>
+      <input id="logExpiry" type="text" placeholder="dd/mm/yyyy" />
+
       <label for="logPhoto">Bukti Foto</label>
       <input id="logPhoto" type="file" accept="image/*" />
 
@@ -66,6 +69,10 @@
   <script src="https://cdn.jsdelivr.net/npm/flatpickr"></script>
   <script>
     flatpickr("#logDate", {
+      dateFormat: "d/m/Y",
+      allowInput: true
+    });
+    flatpickr("#logExpiry", {
       dateFormat: "d/m/Y",
       allowInput: true
     });

@@ -68,16 +68,6 @@ function initApp() {
     
     // Also add event listener as backup
     loginBtn.addEventListener("click", handleLogin, false);
-    
-    // Add mousedown as another backup
-    loginBtn.addEventListener("mousedown", function(e) {
-      console.log("Button mousedown detected!");
-    });
-    
-    // Test if button is clickable - add a visual test
-    loginBtn.style.cursor = "pointer";
-    loginBtn.style.position = "relative";
-    loginBtn.style.zIndex = "10000";
 
     // Add Enter key handler
     adminPassInput.addEventListener("keydown", function(e) {
@@ -91,45 +81,306 @@ function initApp() {
     setTimeout(function() {
       adminPassInput.focus();
     }, 100);
-
-    // Debug: log that button was found
-    console.log("Login button found:", loginBtn);
-    console.log("Login modal found:", loginModal);
-  } else {
-    console.error("Login elements not found!", {
-      loginModal: !!loginModal,
-      loginBtn: !!loginBtn,
-      adminPassInput: !!adminPassInput
-    });
   }
 
-  // Initialize categories
+  // Initialize categories and inventory system
   const categoriesElem = document.getElementById('categories');
   const addCategoryBtn = document.getElementById('addCategoryBtn');
   const searchInput = document.getElementById('search');
+  const logModal = document.getElementById('logModal');
+  const saveLogBtn = document.getElementById('saveLogBtn');
+  const cancelLogBtn = document.getElementById('cancelLogBtn');
+  const logDateInput = document.getElementById('logDate');
+  const logQtyInput = document.getElementById('logQty');
+  const logPhotoInput = document.getElementById('logPhoto');
+  const logExpiryInput = document.getElementById('logExpiry');
+  const logTitle = document.getElementById('logTitle');
+
+  let currentEditItem = null;
+  let isAdding = true;
 
   let categories = [
-    { name: 'toiletris', subcategories: [
-        { name:'Popok', subsub: [ { name:'XL', qty:0 } ] }
-      ] }
+    { 
+      name: 'toiletris', 
+      subcategories: [
+        { 
+          name: 'Popok', 
+          subsub: [ 
+            { name: 'XL', qty: 0, expiry: '', photos: [] } 
+          ] 
+        }
+      ] 
+    }
   ];
 
+  // Load from localStorage
+  function loadData() {
+    const saved = localStorage.getItem('inventarisData');
+    if (saved) {
+      try {
+        categories = JSON.parse(saved);
+      } catch (e) {
+        console.error('Error loading data:', e);
+      }
+    }
+  }
+
+  // Save to localStorage
+  function saveData() {
+    localStorage.setItem('inventarisData', JSON.stringify(categories));
+  }
+
+  // Render full category structure
   function renderCategories(filter) {
     if (!categoriesElem) return;
     
     filter = filter || '';
     categoriesElem.innerHTML = '';
     
-    categories.forEach(function(cat) {
-      if (filter && !cat.name.toLowerCase().includes(filter)) return;
+    categories.forEach(function(cat, catIdx) {
+      if (filter && !cat.name.toLowerCase().includes(filter.toLowerCase())) {
+        // Check subcategories and subsub
+        const hasMatch = cat.subcategories.some(function(sub) {
+          return sub.name.toLowerCase().includes(filter.toLowerCase()) ||
+                 sub.subsub.some(function(item) {
+                   return item.name.toLowerCase().includes(filter.toLowerCase());
+                 });
+        });
+        if (!hasMatch) return;
+      }
       
-      const div = document.createElement('div');
-      div.className = 'category';
-      div.innerHTML = '<div class="name">' + cat.name + '</div>';
-      categoriesElem.appendChild(div);
+      const catDiv = document.createElement('div');
+      catDiv.className = 'category';
+      
+      let html = '<div class="row"><div class="name">' + cat.name + '</div>';
+      if (isAdmin) {
+        html += '<div><button class="small-btn tambah" onclick="window.addSubcategory(' + catIdx + ')">+ Sub</button>';
+        html += '<button class="small-btn kurang" onclick="window.deleteCategory(' + catIdx + ')">Hapus</button></div>';
+      }
+      html += '</div>';
+      html += '<div class="items">';
+      
+      cat.subcategories.forEach(function(sub, subIdx) {
+        html += '<div class="subcategory">';
+        html += '<div class="row"><div class="name">' + sub.name + '</div>';
+        if (isAdmin) {
+          html += '<div><button class="small-btn tambah" onclick="window.addSubsub(' + catIdx + ',' + subIdx + ')">+ Item</button>';
+          html += '<button class="small-btn kurang" onclick="window.deleteSubcategory(' + catIdx + ',' + subIdx + ')">Hapus</button></div>';
+        }
+        html += '</div>';
+        html += '<div class="items">';
+        
+        sub.subsub.forEach(function(item, itemIdx) {
+          html += '<div class="subsubcategory">';
+          html += '<div class="row">';
+          html += '<div class="name">' + item.name;
+          if (item.expiry) {
+            html += ' <span style="color:var(--muted);font-size:0.9em">(Exp: ' + item.expiry + ')</span>';
+          }
+          html += '</div>';
+          html += '<div class="qty-controls">';
+          html += '<span style="font-weight:700;min-width:40px;text-align:center">' + (item.qty || 0) + '</span>';
+          html += '<button class="small-btn tambah" onclick="window.openLogModal(' + catIdx + ',' + subIdx + ',' + itemIdx + ',true)">+</button>';
+          html += '<button class="small-btn kurang" onclick="window.openLogModal(' + catIdx + ',' + subIdx + ',' + itemIdx + ',false)">-</button>';
+          if (isAdmin) {
+            html += '<button class="small-btn" onclick="window.editItem(' + catIdx + ',' + subIdx + ',' + itemIdx + ')" style="background:var(--accent);color:white;font-size:0.8em">Edit</button>';
+            html += '<button class="small-btn kurang" onclick="window.deleteItem(' + catIdx + ',' + subIdx + ',' + itemIdx + ')">Hapus</button>';
+          }
+          html += '</div>';
+          html += '</div>';
+          
+          // Show photos if any
+          if (item.photos && item.photos.length > 0) {
+            html += '<div style="margin-top:8px;display:flex;gap:8px;flex-wrap:wrap">';
+            item.photos.forEach(function(photo, photoIdx) {
+              html += '<img src="' + photo + '" style="width:60px;height:60px;object-fit:cover;border-radius:6px;cursor:pointer" onclick="window.viewPhoto(\'' + photo + '\')" />';
+            });
+            html += '</div>';
+          }
+          
+          html += '</div>';
+        });
+        
+        html += '</div></div>';
+      });
+      
+      html += '</div></div>';
+      catDiv.innerHTML = html;
+      categoriesElem.appendChild(catDiv);
     });
   }
 
+  // Global functions for buttons
+  window.addSubcategory = function(catIdx) {
+    if (!isAdmin) return alert('Admin only');
+    const name = prompt('Nama subkategori');
+    if (!name) return;
+    categories[catIdx].subcategories.push({ name: name, subsub: [] });
+    saveData();
+    renderCategories();
+  };
+
+  window.addSubsub = function(catIdx, subIdx) {
+    if (!isAdmin) return alert('Admin only');
+    const name = prompt('Nama item');
+    if (!name) return;
+    categories[catIdx].subcategories[subIdx].subsub.push({ 
+      name: name, 
+      qty: 0, 
+      expiry: '', 
+      photos: [] 
+    });
+    saveData();
+    renderCategories();
+  };
+
+  window.deleteCategory = function(catIdx) {
+    if (!isAdmin) return alert('Admin only');
+    if (confirm('Hapus kategori ' + categories[catIdx].name + '?')) {
+      categories.splice(catIdx, 1);
+      saveData();
+      renderCategories();
+    }
+  };
+
+  window.deleteSubcategory = function(catIdx, subIdx) {
+    if (!isAdmin) return alert('Admin only');
+    if (confirm('Hapus subkategori ' + categories[catIdx].subcategories[subIdx].name + '?')) {
+      categories[catIdx].subcategories.splice(subIdx, 1);
+      saveData();
+      renderCategories();
+    }
+  };
+
+  window.deleteItem = function(catIdx, subIdx, itemIdx) {
+    if (!isAdmin) return alert('Admin only');
+    if (confirm('Hapus item ' + categories[catIdx].subcategories[subIdx].subsub[itemIdx].name + '?')) {
+      categories[catIdx].subcategories[subIdx].subsub.splice(itemIdx, 1);
+      saveData();
+      renderCategories();
+    }
+  };
+
+  window.editItem = function(catIdx, subIdx, itemIdx) {
+    if (!isAdmin) return alert('Admin only');
+    const item = categories[catIdx].subcategories[subIdx].subsub[itemIdx];
+    const newName = prompt('Nama item baru:', item.name);
+    if (newName && newName !== item.name) {
+      item.name = newName;
+      saveData();
+      renderCategories();
+    }
+    const newExpiry = prompt('Tanggal kadaluarsa (dd/mm/yyyy):', item.expiry || '');
+    if (newExpiry !== null) {
+      item.expiry = newExpiry;
+      saveData();
+      renderCategories();
+    }
+  };
+
+  window.openLogModal = function(catIdx, subIdx, itemIdx, adding) {
+    currentEditItem = { catIdx, subIdx, itemIdx };
+    isAdding = adding;
+    
+    if (logTitle) {
+      logTitle.textContent = adding ? 'Tambah' : 'Kurangi';
+    }
+    if (logQtyInput) {
+      logQtyInput.value = 1;
+    }
+    if (logDateInput) {
+      logDateInput.value = '';
+    }
+    if (logExpiryInput) {
+      logExpiryInput.value = '';
+    }
+    if (logPhotoInput) {
+      logPhotoInput.value = '';
+    }
+    
+    if (logModal) {
+      logModal.classList.remove('hidden');
+      document.body.classList.add('modal-open');
+    }
+  };
+
+  window.viewPhoto = function(photoUrl) {
+    const img = document.createElement('img');
+    img.src = photoUrl;
+    img.style.cssText = 'max-width:90vw;max-height:90vh;position:fixed;top:50%;left:50%;transform:translate(-50%,-50%);z-index:10001;border:4px solid white;border-radius:8px;box-shadow:0 4px 20px rgba(0,0,0,0.5)';
+    img.onclick = function() {
+      document.body.removeChild(img);
+    };
+    document.body.appendChild(img);
+  };
+
+  // Save log
+  if (saveLogBtn) {
+    saveLogBtn.addEventListener('click', function() {
+      if (!currentEditItem) return;
+      
+      const date = logDateInput ? logDateInput.value.trim() : '';
+      const qty = logQtyInput ? parseInt(logQtyInput.value) : 1;
+      const expiry = logExpiryInput ? logExpiryInput.value.trim() : '';
+      
+      if (!date) {
+        alert('Tanggal wajib diisi!');
+        return;
+      }
+      
+      const item = categories[currentEditItem.catIdx]
+        .subcategories[currentEditItem.subIdx]
+        .subsub[currentEditItem.itemIdx];
+      
+      // Update quantity
+      if (isAdding) {
+        item.qty = (item.qty || 0) + qty;
+      } else {
+        item.qty = Math.max(0, (item.qty || 0) - qty);
+      }
+      
+      // Update expiry date if provided
+      if (expiry) {
+        item.expiry = expiry;
+      }
+      
+      // Handle photo
+      if (logPhotoInput && logPhotoInput.files && logPhotoInput.files[0]) {
+        const file = logPhotoInput.files[0];
+        const reader = new FileReader();
+        reader.onload = function(e) {
+          if (!item.photos) item.photos = [];
+          item.photos.push(e.target.result);
+          saveData();
+          renderCategories();
+        };
+        reader.readAsDataURL(file);
+      } else {
+        saveData();
+        renderCategories();
+      }
+      
+      // Close modal
+      if (logModal) {
+        logModal.classList.add('hidden');
+        document.body.classList.remove('modal-open');
+      }
+      currentEditItem = null;
+    });
+  }
+
+  // Cancel log
+  if (cancelLogBtn) {
+    cancelLogBtn.addEventListener('click', function() {
+      if (logModal) {
+        logModal.classList.add('hidden');
+        document.body.classList.remove('modal-open');
+      }
+      currentEditItem = null;
+    });
+  }
+
+  // Add category
   if (addCategoryBtn) {
     addCategoryBtn.addEventListener('click', function() {
       if (!isAdmin) {
@@ -139,16 +390,20 @@ function initApp() {
       const name = prompt('Nama kategori');
       if (!name) return;
       categories.push({ name: name, subcategories: [] });
+      saveData();
       renderCategories();
     });
   }
 
+  // Search
   if (searchInput) {
     searchInput.addEventListener('input', function(e) {
-      renderCategories(e.target.value.toLowerCase());
+      renderCategories(e.target.value);
     });
   }
 
+  // Initialize
+  loadData();
   renderCategories();
 }
 
