@@ -114,7 +114,8 @@ function initApp() {
   ];
 
   // Check if Firebase is available
-  const useFirebase = typeof firebase !== 'undefined' && typeof db !== 'undefined' && db;
+  const useFirebase = (typeof firebase !== 'undefined') && (typeof db !== 'undefined') && !!db;
+  console.log('[Firebase] useFirebase =', useFirebase);
   const DATA_COLLECTION = 'inventaris';
   const DATA_DOC_ID = 'main';
 

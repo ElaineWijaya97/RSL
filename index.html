@@ -74,7 +74,8 @@
       apiKey: "AIzaSyCdHMitORhEiSdFqSVLplMx-QWxSGY1TvE",
       authDomain: "rsl-inventaris.firebaseapp.com",
       projectId: "rsl-inventaris",
-      storageBucket: "rsl-inventaris.firebasestorage.app",
+      // NOTE: storageBucket should usually end with .appspot.com
+      storageBucket: "rsl-inventaris.appspot.com",
       messagingSenderId: "1055201945452",
       appId: "1:1055201945452:web:60857ac8afc11557383549",
       measurementId: "G-57P2E75ZC8"
@@ -83,6 +84,11 @@
     // Initialize Firebase
     firebase.initializeApp(firebaseConfig);
     const db = firebase.firestore();
+
+    console.log("[Firebase] Initialized", {
+      hasFirebase: typeof firebase !== "undefined",
+      projectId: firebaseConfig.projectId
+    });
   </script>
 
   <script src="script.js"></script>
