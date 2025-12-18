@@ -484,12 +484,21 @@ function initApp() {
         if (value && value !== item.name) {
           item.name = value;
         }
-        const newExpiry = prompt('Tanggal kadaluarsa (dd/mm/yyyy):', item.expiry || '');
-        if (newExpiry !== null) {
-          item.expiry = newExpiry;
-        }
-        saveDataNow();
-        renderCategories();
+        // After editing name, ask expiry in another modal so it's not a browser prompt
+        openActionModal({
+          title: 'Edit Kadaluarsa',
+          message: 'Ubah tanggal kadaluarsa (dd/mm/yyyy):',
+          placeholder: 'dd/mm/yyyy',
+          needsInput: true,
+          defaultValue: item.expiry || '',
+          callback: function(ok2, expiryVal) {
+            if (ok2 && expiryVal !== null) {
+              item.expiry = expiryVal;
+            }
+            saveDataNow();
+            renderCategories();
+          }
+        });
       }
     });
   };
