@@ -23,12 +23,16 @@
     <div class="controls">
       <input id="search" class="search-bar" placeholder="Cari..." />
       <button id="addCategoryBtn" class="btn primary">+ Tambah Kategori</button>
+      <button id="addCategoryIcon" class="small-btn tambah add-category-icon" type="button">+</button>
     </div>
 
     <main>
       <div id="categories"></div>
     </main>
   </div>
+
+  <!-- Simple toast for in-page messages (replaces browser alerts) -->
+  <div id="toast" class="toast hidden"></div>
 
   <!-- LOG MODAL -->
   <div id="logModal" class="modal hidden" aria-hidden="true">
@@ -90,21 +94,6 @@
       hasFirebase: typeof firebase !== "undefined",
       projectId: firebaseConfig.projectId
     });
-  </script>
-
-  <!-- Override default browser popups so "…says" dialog does not appear -->
-  <script>
-    window.alert = function(message) {
-      console.log('[Alert]', message);
-    };
-    window.confirm = function(message) {
-      console.log('[Confirm]', message);
-      return true;
-    };
-    window.prompt = function(message, defaultValue) {
-      console.log('[Prompt]', message);
-      return defaultValue || '';
-    };
   </script>
 
   <script src="script.js"></script>
