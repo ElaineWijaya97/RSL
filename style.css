@@ -45,10 +45,20 @@ body.modal-open .modal-card *{
   opacity:1;
 }
 
-header h1{
-  text-align:center;
+header{
+  display:flex;
+  align-items:center;
+  gap:12px;
   margin-bottom:18px;
+}
+header h1{
+  margin:0;
   font-size:34px;
+}
+.site-logo{
+  height:40px;
+  width:auto;
+  border-radius:8px;
 }
 
 .controls{display:flex;gap:10px;margin-bottom:16px}

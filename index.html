@@ -16,6 +16,7 @@
 <body>
   <div class="container">
     <header>
+      <img src="Leo Internasional Logo.jpg" alt="Leo Internasional Logo" class="site-logo" />
       <h1>Inventaris</h1>
     </header>
 
@@ -89,6 +90,21 @@
       hasFirebase: typeof firebase !== "undefined",
       projectId: firebaseConfig.projectId
     });
+  </script>
+
+  <!-- Override default browser popups so "…says" dialog does not appear -->
+  <script>
+    window.alert = function(message) {
+      console.log('[Alert]', message);
+    };
+    window.confirm = function(message) {
+      console.log('[Confirm]', message);
+      return true;
+    };
+    window.prompt = function(message, defaultValue) {
+      console.log('[Prompt]', message);
+      return defaultValue || '';
+    };
   </script>
 
   <script src="script.js"></script>
