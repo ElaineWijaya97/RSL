@@ -23,7 +23,6 @@
     <div class="controls">
       <input id="search" class="search-bar" placeholder="Cari..." />
       <button id="addCategoryBtn" class="btn primary">+ Tambah Kategori</button>
-      <button id="addCategoryIcon" class="small-btn tambah add-category-icon" type="button">+</button>
     </div>
 
     <main>
@@ -33,6 +32,19 @@
 
   <!-- Simple toast for in-page messages (replaces browser alerts) -->
   <div id="toast" class="toast hidden"></div>
+
+  <!-- GENERIC ACTION MODAL (for tambah kategori / sub / item / hapus etc) -->
+  <div id="actionModal" class="modal hidden" aria-hidden="true">
+    <div class="modal-card">
+      <h3 id="actionTitle">Konfirmasi</h3>
+      <p id="actionMessage" style="margin:8px 0 12px 0;font-size:14px;color:#4b5563"></p>
+      <input id="actionInput" type="text" class="action-input hidden" placeholder="" />
+      <div class="modal-actions">
+        <button id="actionNo" class="btn">Batal</button>
+        <button id="actionYes" class="btn primary">OK</button>
+      </div>
+    </div>
+  </div>
 
   <!-- LOG MODAL -->
   <div id="logModal" class="modal hidden" aria-hidden="true">

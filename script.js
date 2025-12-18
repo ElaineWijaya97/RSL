@@ -99,6 +99,77 @@ function initApp() {
   let currentEditItem = null;
   let isAdding = true;
 
+  // Generic action modal (for tambah kategori / sub / item / hapus etc)
+  const actionModal = document.getElementById('actionModal');
+  const actionTitle = document.getElementById('actionTitle');
+  const actionMessage = document.getElementById('actionMessage');
+  const actionInput = document.getElementById('actionInput');
+  const actionYes = document.getElementById('actionYes');
+  const actionNo = document.getElementById('actionNo');
+
+  let actionCallback = null;
+  let actionNeedsInput = false;
+
+  function closeActionModal() {
+    if (actionModal) {
+      actionModal.classList.add('hidden');
+    }
+    document.body.classList.remove('modal-open');
+    if (actionInput) {
+      actionInput.value = '';
+      actionInput.classList.add('hidden');
+    }
+    actionCallback = null;
+    actionNeedsInput = false;
+  }
+
+  function openActionModal(options) {
+    if (!actionModal || !actionTitle || !actionMessage || !actionYes || !actionNo) return;
+    const { title, message, placeholder, defaultValue, needsInput, callback } = options;
+
+    actionTitle.textContent = title || 'Konfirmasi';
+    actionMessage.textContent = message || '';
+    actionCallback = callback || null;
+    actionNeedsInput = !!needsInput;
+
+    if (actionInput) {
+      if (actionNeedsInput) {
+        actionInput.classList.remove('hidden');
+        actionInput.placeholder = placeholder || '';
+        actionInput.value = defaultValue || '';
+        setTimeout(function() {
+          actionInput.focus();
+        }, 50);
+      } else {
+        actionInput.classList.add('hidden');
+        actionInput.value = '';
+      }
+    }
+
+    document.body.classList.add('modal-open');
+    actionModal.classList.remove('hidden');
+  }
+
+  if (actionYes) {
+    actionYes.addEventListener('click', function() {
+      let value = null;
+      if (actionNeedsInput && actionInput) {
+        value = actionInput.value.trim();
+      }
+      const cb = actionCallback;
+      closeActionModal();
+      if (cb) cb(true, value);
+    });
+  }
+
+  if (actionNo) {
+    actionNo.addEventListener('click', function() {
+      const cb = actionCallback;
+      closeActionModal();
+      if (cb) cb(false, null);
+    });
+  }
+
   let categories = [
     { 
       name: 'toiletris', 
@@ -316,69 +387,111 @@ function initApp() {
   // Global functions for buttons
   window.addSubcategory = function(catIdx) {
     if (!isAdmin) return alert('Admin only');
-    const name = prompt('Nama subkategori');
-    if (!name) return;
-    categories[catIdx].subcategories.push({ name: name, subsub: [] });
-    saveDataNow();
-    renderCategories();
+    openActionModal({
+      title: 'Tambah Subkategori',
+      message: 'Masukkan nama subkategori baru:',
+      placeholder: 'Nama subkategori',
+      needsInput: true,
+      callback: function(ok, value) {
+        if (!ok || !value) return;
+        categories[catIdx].subcategories.push({ name: value, subsub: [] });
+        saveDataNow();
+        renderCategories();
+      }
+    });
   };
 
   window.addSubsub = function(catIdx, subIdx) {
     if (!isAdmin) return alert('Admin only');
-    const name = prompt('Nama item');
-    if (!name) return;
-    categories[catIdx].subcategories[subIdx].subsub.push({ 
-      name: name, 
-      qty: 0, 
-      expiry: '', 
-      photos: [] 
+    openActionModal({
+      title: 'Tambah Item',
+      message: 'Masukkan nama item baru:',
+      placeholder: 'Nama item',
+      needsInput: true,
+      callback: function(ok, value) {
+        if (!ok || !value) return;
+        categories[catIdx].subcategories[subIdx].subsub.push({ 
+          name: value, 
+          qty: 0, 
+          expiry: '', 
+          photos: [] 
+        });
+        saveDataNow();
+        renderCategories();
+      }
     });
-    saveDataNow();
-    renderCategories();
   };
 
   window.deleteCategory = function(catIdx) {
     if (!isAdmin) return alert('Admin only');
-    if (confirm('Hapus kategori ' + categories[catIdx].name + '?')) {
-      categories.splice(catIdx, 1);
-      saveDataNow();
-      renderCategories();
-    }
+    const name = categories[catIdx].name;
+    openActionModal({
+      title: 'Hapus Kategori',
+      message: 'Hapus kategori "' + name + '"?',
+      needsInput: false,
+      callback: function(ok) {
+        if (!ok) return;
+        categories.splice(catIdx, 1);
+        saveDataNow();
+        renderCategories();
+      }
+    });
   };
 
   window.deleteSubcategory = function(catIdx, subIdx) {
     if (!isAdmin) return alert('Admin only');
-    if (confirm('Hapus subkategori ' + categories[catIdx].subcategories[subIdx].name + '?')) {
-      categories[catIdx].subcategories.splice(subIdx, 1);
-      saveDataNow();
-      renderCategories();
-    }
+    const name = categories[catIdx].subcategories[subIdx].name;
+    openActionModal({
+      title: 'Hapus Subkategori',
+      message: 'Hapus subkategori "' + name + '"?',
+      needsInput: false,
+      callback: function(ok) {
+        if (!ok) return;
+        categories[catIdx].subcategories.splice(subIdx, 1);
+        saveDataNow();
+        renderCategories();
+      }
+    });
   };
 
   window.deleteItem = function(catIdx, subIdx, itemIdx) {
     if (!isAdmin) return alert('Admin only');
-    if (confirm('Hapus item ' + categories[catIdx].subcategories[subIdx].subsub[itemIdx].name + '?')) {
-      categories[catIdx].subcategories[subIdx].subsub.splice(itemIdx, 1);
-      saveDataNow();
-      renderCategories();
-    }
+    const name = categories[catIdx].subcategories[subIdx].subsub[itemIdx].name;
+    openActionModal({
+      title: 'Hapus Item',
+      message: 'Hapus item "' + name + '"?',
+      needsInput: false,
+      callback: function(ok) {
+        if (!ok) return;
+        categories[catIdx].subcategories[subIdx].subsub.splice(itemIdx, 1);
+        saveDataNow();
+        renderCategories();
+      }
+    });
   };
 
   window.editItem = function(catIdx, subIdx, itemIdx) {
     if (!isAdmin) return alert('Admin only');
     const item = categories[catIdx].subcategories[subIdx].subsub[itemIdx];
-    const newName = prompt('Nama item baru:', item.name);
-    if (newName && newName !== item.name) {
-      item.name = newName;
-      saveDataNow();
-      renderCategories();
-    }
-    const newExpiry = prompt('Tanggal kadaluarsa (dd/mm/yyyy):', item.expiry || '');
-    if (newExpiry !== null) {
-      item.expiry = newExpiry;
-      saveDataNow();
-      renderCategories();
-    }
+    openActionModal({
+      title: 'Edit Item',
+      message: 'Ubah nama item:',
+      placeholder: 'Nama item',
+      needsInput: true,
+      defaultValue: item.name,
+      callback: function(ok, value) {
+        if (!ok) return;
+        if (value && value !== item.name) {
+          item.name = value;
+        }
+        const newExpiry = prompt('Tanggal kadaluarsa (dd/mm/yyyy):', item.expiry || '');
+        if (newExpiry !== null) {
+          item.expiry = newExpiry;
+        }
+        saveDataNow();
+        renderCategories();
+      }
+    });
   };
 
   window.openLogModal = function(catIdx, subIdx, itemIdx, adding) {
@@ -486,11 +599,18 @@ function initApp() {
   // Add category
   if (addCategoryBtn) {
     addCategoryBtn.addEventListener('click', function() {
-      const name = prompt('Nama kategori');
-      if (!name) return;
-      categories.push({ name: name, subcategories: [] });
-      saveDataNow();
-      renderCategories();
+      openActionModal({
+        title: 'Tambah Kategori',
+        message: 'Masukkan nama kategori baru:',
+        placeholder: 'Nama kategori',
+        needsInput: true,
+        callback: function(ok, value) {
+          if (!ok || !value) return;
+          categories.push({ name: value, subcategories: [] });
+          saveDataNow();
+          renderCategories();
+        }
+      });
     });
   }
 

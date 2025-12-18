@@ -45,20 +45,10 @@ body.modal-open .modal-card *{
   opacity:1;
 }
 
-header{
-  display:flex;
-  align-items:center;
-  gap:12px;
-  margin-bottom:18px;
-}
 header h1{
-  margin:0;
+  text-align:center;
+  margin-bottom:18px;
   font-size:34px;
-}
-.site-logo{
-  height:40px;
-  width:auto;
-  border-radius:8px;
 }
 
 .controls{display:flex;gap:10px;margin-bottom:16px}
@@ -113,6 +103,33 @@ label{
 .name{font-weight:700}
 .items{margin-top:10px;padding-left:8px}
 .hidden{display:none}
+
+/* Toast message (optional helper) */
+.toast{
+  position:fixed;
+  left:50%;
+  bottom:20px;
+  transform:translateX(-50%);
+  background:#111827;
+  color:white;
+  padding:10px 14px;
+  border-radius:999px;
+  font-size:14px;
+  box-shadow:0 10px 30px rgba(0,0,0,0.25);
+  z-index:10002;
+  max-width:90vw;
+  text-align:center;
+}
+
+.action-input{
+  width:100%;
+  padding:10px 12px;
+  border-radius:10px;
+  border:1px solid #e6e9ee;
+  font-size:15px;
+  box-sizing:border-box;
+  margin-bottom:10px;
+}
 
 .qty-controls{display:flex;gap:8px}
 .small-btn{padding:6px 10px;border-radius:8px;border:none;font-weight:600;cursor:pointer}
