@@ -486,10 +486,6 @@ function initApp() {
   // Add category
   if (addCategoryBtn) {
     addCategoryBtn.addEventListener('click', function() {
-      if (!isAdmin) {
-        alert('Admin only');
-        return;
-      }
       const name = prompt('Nama kategori');
       if (!name) return;
       categories.push({ name: name, subcategories: [] });
