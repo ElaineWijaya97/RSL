@@ -45,30 +45,36 @@ body.modal-open .modal-card *{
   opacity:1;
 }
 
-header{
+.hero-header{
   display:flex;
   align-items:center;
-  justify-content:flex-start;
-  flex-direction:row-reverse; /* text on left, logo on right */
-  gap:8px;
-  margin-bottom:6px;
+  justify-content:space-between;
+  gap:16px;
+  margin-bottom:16px;
 }
-header h1{
+.hero-mark{
+  font-size:32px;
+  font-weight:800;
+  letter-spacing:0.15em;
+  padding:6px 10px;
+  border-radius:8px;
+  border:2px solid #111827;
+}
+.hero-text h1{
   margin:0;
   font-size:30px;
 }
-.site-logo{
-  height:24px;
-  width:auto;
-  border-radius:8px;
-  object-fit:contain;
-}
 .subtitle{
-  margin:0 0 18px 0;
-  font-size:13px;
+  margin:2px 0 0 0;
+  font-size:14px;
   color:#111827;
-  text-align:left;
   font-weight:500;
+}
+.hero-logo{
+  height:56px;
+  width:auto;
+  object-fit:contain;
+  border-radius:8px;
 }
 
 .controls{display:flex;gap:10px;margin-bottom:16px}
