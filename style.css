@@ -47,26 +47,27 @@ body.modal-open .modal-card *{
 
 header{
   display:flex;
-  flex-direction:column;
   align-items:center;
-  gap:6px;
-  margin-bottom:4px;
+  justify-content:center;
+  gap:8px;
+  margin-bottom:6px;
 }
 header h1{
   margin:0;
-  font-size:32px;
+  font-size:30px;
 }
 .site-logo{
-  height:32px;
+  height:24px;
   width:auto;
   border-radius:8px;
   object-fit:contain;
 }
 .subtitle{
   margin:0 0 18px 0;
-  font-size:14px;
+  font-size:13px;
   color:#111827;
   text-align:center;
+  font-weight:500;
 }
 
 .controls{display:flex;gap:10px;margin-bottom:16px}
